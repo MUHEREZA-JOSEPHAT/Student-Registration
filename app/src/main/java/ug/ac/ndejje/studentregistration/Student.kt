@@ -6,6 +6,6 @@ data class Student(
     val regNumber: String,
     val programme: String,
     val profileImageId: Int, // Resource ID (e.g., R.drawable.female_student)
-    var isVerified: Boolean = false
+    var attendance: String
 
 )

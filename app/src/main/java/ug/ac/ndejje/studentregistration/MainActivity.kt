@@ -53,9 +53,8 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun StudentInfo(student: Student,verifiedStatus: Boolean?){
-    Column(horizontalAlignment = Alignment.CenterHorizontally
-    ) {
+fun StudentInfo(student: Student, attendance: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Image(
             painter = painterResource(student.profileImageId),
             contentDescription = "Profile Image",
@@ -75,31 +74,33 @@ fun StudentInfo(student: Student,verifiedStatus: Boolean?){
             text = student.regNumber,
             color = Color.Black,
             fontWeight = FontWeight.Bold
-
         )
 
-
-        if (verifiedStatus == true) {
-            Text("Verified Student", color = Color(0xFF4CAF50))
-        } else if (verifiedStatus == false) {
-            Text("Student not verified", color = Color.Red)
+        if (attendance.isNotEmpty()) {
+            Text(
+                text = attendance,
+                color = if (attendance == "Present") Color(0xFF4CAF50) else Color.Red,
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier.padding(top = 8.dp)
+            )
         }
-
     }
 }
 
 @Composable
-fun StudentIdCard(student: Student){
-    var showStatus by remember { mutableStateOf<Boolean?>(null) }
+fun StudentIdCard(student: Student) {
+    var attendance by remember { mutableStateOf(student.attendance) }
+    var showOptions by remember { mutableStateOf(false) }
 
-    ElevatedCard(modifier = Modifier
-        .fillMaxWidth()
-        .padding(16.dp),
+    ElevatedCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
         shape = RoundedCornerShape(size = 16.dp),
         colors = CardDefaults.elevatedCardColors(
             containerColor = MaterialTheme.colorScheme.primary
         )
-
     ) {
         Column(
             modifier = Modifier
@@ -107,39 +108,60 @@ fun StudentIdCard(student: Student){
                 .fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            StudentInfo(student,showStatus)
-            Button(onClick = {
-                showStatus = if (showStatus == null) student.isVerified else null
-            }) {
-                Text(if (showStatus == null) "View Profile" else "Hide Profile")
+            StudentInfo(student, attendance)
+
+            if (attendance.isEmpty()) {
+                if (showOptions) {
+                    Button(onClick = {
+                        attendance = "Present"
+                        student.attendance = "Present"
+                        showOptions = false
+                    }) {
+                        Text("Present")
+                    }
+                }
+
+                Button(onClick = {
+                    showOptions = !showOptions
+                }) {
+                    Text("Mark Attendance")
+                }
+
+                if (showOptions) {
+                    Button(onClick = {
+                        attendance = "Absent"
+                        student.attendance = "Absent"
+                        showOptions = false
+                    }) {
+                        Text("Absent")
+                    }
+                }
             }
         }
     }
 }
 
 @Composable
-fun StudentDirectory(){
+fun StudentDirectory() {
     var querySearch by remember { mutableStateOf("") }
     val allStudents = StudentProvider.studentList
-    val filteredStudent by remember (querySearch){
+    val filteredStudent by remember(querySearch) {
         derivedStateOf {
-            if(querySearch.isBlank()){
+            if (querySearch.isBlank()) {
                 allStudents
-            }
-            else {
-                allStudents.filter{
+            } else {
+                allStudents.filter {
                     it.name.contains(querySearch, ignoreCase = true)
                 }
             }
-
         }
     }
-    LazyColumn(modifier = Modifier
-        .fillMaxWidth(),
-
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxWidth(),
         contentPadding = PaddingValues(16.dp)
     ) {
-        item() {
+        item {
             TextField(
                 value = querySearch,
                 onValueChange = { querySearch = it },
@@ -148,24 +170,20 @@ fun StudentDirectory(){
                     .padding(16.dp),
                 placeholder = { Text("Search Student") },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-                trailingIcon = {Icon(Icons.Default.Person, contentDescription = null)},
+                trailingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
                 shape = RoundedCornerShape(12.dp),
-
-                )
-
+            )
         }
 
-        items(filteredStudent){student ->
+        items(filteredStudent) { student ->
             StudentIdCard(student = student)
         }
     }
-
 }
 
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreview() {
     StudentRegistrationTheme {
-
     }
 }
